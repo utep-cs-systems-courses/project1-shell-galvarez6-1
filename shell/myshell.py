@@ -20,6 +20,15 @@ while 1:
         print('\n'+'\033[1m' + "Leaving Shell..")
         break
 
+    #if the user types cd to change directory
+    elif command[0] == "cd":
+        #if directory not there return an Error
+        #else if append command[1] to current working directory
+        #path_to =  os.getcwd()+command[1]
+        #then change director using
+        #os.chdir("/Users/gillie/Documents/fallOS")
+
+
 ##############################
     #use path to look for file
     #path = os.environ["PATH"]
