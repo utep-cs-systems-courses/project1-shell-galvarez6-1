@@ -12,21 +12,52 @@ while 1:
     command =  input("$ ")
     #take the string the user entered and parse each word by white space
     command = command.split()
+    #print(command)
     #test to see if split works
     #print(command[0])
     #if the user wants to terminte the shell they can type the command exit
     #to break the while loop
     if command[0] == "exit":
         print('\n'+'\033[1m' + "Leaving Shell..")
+        print('\033[1m' + "Bye!" + '\n')
         break
 
     #if the user types cd to change directory
     elif command[0] == "cd":
-        #if directory not there return an Error
-        #else if append command[1] to current working directory
-        #path_to =  os.getcwd()+command[1]
-        #then change director using
-        #os.chdir("/Users/gillie/Documents/fallOS")
+        #check if the directory exist using isdir method of os
+        # the path wanting to move to is the second one in the user input commands
+        if os.path.isdir( os.getcwd() + '/' + command[1]):
+            #else if append command[1] to current working directory
+            #then change director using
+            #os.chdir("name of the directory")
+            os.chdir( os.getcwd() + '/' + command[1])
+            print("\n " + '\033[94m' + '\033[1m' + "**Changed directory to: " + '\033[0m')
+            print(os.getcwd())
+        else:
+            print('\033[1m' + "Directory doesn't exist" + '\033[0m')
+
+    elif command[0] == "pwd":
+        #print the current working Directory
+        print('\033[1m' + os.getcwd() + '\033[0m')
+
+    #print the files and folders in a current Directory
+    #in python os.listdir returns the names of files and folders
+
+    elif command[0] == "ls":
+        #use a for loop to print each item in the currenet Directory
+        print("\n " + '\033[1m' + "**files and folders**" + '\033[0m')
+        for i in os.listdir():
+            #print(i + "\t")
+            #to help distinguish between a file and folder a folder is blue
+            #like in emacs
+            if os.path.isdir(os.getcwd() + '/' + i):
+                print('\033[94m' + i + '\033[0m')
+            else:
+                print(i)
+        print("\n")
+
+
+
 
 
 ##############################
