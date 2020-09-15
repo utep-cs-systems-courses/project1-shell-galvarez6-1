@@ -1,3 +1,5 @@
+#Gilbert Alvarez
+#OS fall 2020
 import os
 import re
 import sys
@@ -18,12 +20,130 @@ except KeyError:
     cPrompt = "command$: "
 
 
+##############################################
+#functions for out and in redirect
+
+#check if command has > to outPut
+def outPut(list):
+    a = '>'
+    if a in list:
+        return True
+    else:
+        return False
+#check if command has < input
+def inPut(list):
+    a = '<'
+    if a in list:
+        return True
+    else:
+        return False
+
+
+def directOut(command):
+    #split the commands list by the >
+    delimeterIndex = comands.index('>')
+    command = command[delimeterIndex-1]
+    fileName = command[delimeterIndex+1]
+    #assign args to be a list of the end elemnets from command based on the
+    #location index of the >
+    args = command[delimeterIndex:]
+
+    rc = os.fork()
+    if rc < 0:
+        os.write(2,("Fork Failed, Returning").encode())
+        sys.exit(1)
+    elif rc == 0:
+        os.close(1)
+        sys.stdout = open(fileName,"w")
+        os.set_inheritable(1,True)
+        for dir in re.split(":", os.environ['PATH']):
+            program = "%s/%s" % (dir, args[0])
+            try:
+                os.execve(program,args,os.environ)
+            except FileNotFoundError:
+                pass
+        os.write(1,("Could not exec: %s\n"%args[0]).encode())
+        sys.exit(0)
+
+def directIn(command):
+    #split the commands list by the <
+    delimeterIndex = comands.index('<')
+    command = command[delimeterIndex-1]
+    fileName = command[delimeterIndex+1]
+    #assign args to be a list of the end elemnets from command based on the
+    #location index of the <
+    args = command[delimeterIndex:]
+
+    rc = os.fork()
+    if rc < 0:
+        os.write(2,("Fork Failed, Returning").encode())
+        sys.exit(1)
+    elif rc == 0:
+        os.close(1)
+        sys.stdout = open(fileName,"w")
+        os.set_inheritable(1,True)
+        for dir in re.split(":", os.environ['PATH']):
+            program = "%s/%s" % (dir, args[0])
+            try:
+                os.execve(program,args,os.environ)
+            except FileNotFoundError:
+                pass
+        os.write(1,("Could not exec: %s\n"%args[0]).encode())
+        sys.exit(0)
+
+
+##############################################
+#check if the commands list has | to pipe
 def pipeCheck(list):
     a = '|'
     if a in list:
         return True
     else:
         return False
+
+#funciton to pipe the commands
+def pipping(list):
+    #pipes: the output of one file is the input of another
+    #this comes from what i understood in programming langues and software
+    #using os.pipes() in python
+    #this method returns file descriptors for read and write
+    r,w = os.pipe()
+    #pipe demo uses set_inheritable: this sets the inheritable flag to a
+    #specific file descriptor
+    #this flag indicatates that a file descriptor can be inheritaded by
+    #a child process
+    #basically the child can use the same file as the parent (interperated this
+    #from geeks for geeks)
+    for f in (r, w):
+        os.set_inheritable(f, True)
+
+    #fork a child process
+    rc = os.fork()
+    #forking process failed
+    if rc < 0:
+        sys.exit(1)
+    #child process was created successfully continue to pipe
+    elif rc == 0:
+        #we dont always know if the command before the '|' in the command list is
+        # 0 we need to return the index before the '|'
+        #we can use pythons .index that returns the lowest index in which the
+        #elemnet appears (interperated from geeks for geeks)
+        b4Pipe = commands.index('|')
+        #redirect the childs output
+        #close filedescriptor with value of 1 so it doesnt refer to another value
+        #and can be reused
+        os.close(1)
+        #duplicate the write file descriptor
+        os.dup(w)
+        for fd in (r, w):
+            os.close(fd)
+
+
+
+
+
+#################################################
+
 
 #we need an infinte loop to keep the shell running and allow the user to
 #input commands, 1 means true
@@ -83,8 +203,15 @@ while 1:
                 print(i)
         print("\n")
 
+    #check for output in user commands
+    elif outPut(command):
+        directOut(command)
+    #check for input in user commands
+    elif inPut(command):
+        directIn(command)
+    #check for pipe in user command
     elif pipeCheck(command):
-        #print("yes")
+        pipping(command)
 
 
 
@@ -136,10 +263,3 @@ while 1:
 #we need to parse the string the users input to find the '>' '<'
 #to determine what type of indirect to user
 ##############################################
-
-##############################################
-#pipes: the output of one file is the input of another
-#this comes from what i understood in programming langues and software
-#using os.pipes() in python
-#this method returns file descriptors for read and write
-r,w = os.pipe()
